@@ -1,0 +1,42 @@
+:root { font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; }
+body { margin: 0; background: #f6f7fb; color: #111; }
+.header { padding: 18px 16px; background: #fff; border-bottom: 1px solid #e6e6ef; }
+.header h1 { margin: 0; font-size: 20px; }
+.sub { margin: 6px 0 0; color: #555; font-size: 12px; }
+
+.wrap { max-width: 980px; margin: 0 auto; padding: 14px; }
+
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.tab { border: 1px solid #d7d7e6; background: #fff; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+.tab.is-active { border-color: #111; }
+
+.view { display: none; }
+.view.is-show { display: block; }
+
+.card { background: #fff; border: 1px solid #e6e6ef; border-radius: 14px; padding: 12px; margin: 12px 0; }
+.cardHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cardHead h3, .cardHead h2 { margin: 0; }
+
+label { display: block; font-size: 13px; margin: 10px 0; }
+input, textarea { width: 100%; padding: 10px; border: 1px solid #d7d7e6; border-radius: 10px; font-size: 14px; box-sizing: border-box; }
+
+.row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.btn { border: 1px solid #111; background: #111; color: #fff; padding: 10px 12px; border-radius: 12px; cursor: pointer; }
+.btn.ghost { background: #fff; color: #111; }
+.btn.small { padding: 6px 10px; border-radius: 10px; font-size: 12px; }
+
+.stepper { display: flex; gap: 8px; margin: 10px 0 6px; }
+.step { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; border: 1px solid #d7d7e6; background: #fff; }
+.step.is-active { border-color: #111; }
+
+.panel { display: none; }
+.panel.is-show { display: block; }
+
+.list { display: grid; gap: 10px; }
+.item { border: 1px solid #e6e6ef; border-radius: 12px; padding: 10px; }
+.item .meta { font-size: 12px; color: #555; display: flex; gap: 10px; flex-wrap: wrap; }
+.item .title { font-weight: 700; margin: 0 0 6px; }
+.item .body { margin: 6px 0 0; white-space: pre-wrap; }
+.item .actions { margin-top: 8px; display: flex; gap: 8px; }
+
+.pre { background: #0b0b0f; color: #fff; padding: 10px; border-radius: 12px; overflow: auto; }
