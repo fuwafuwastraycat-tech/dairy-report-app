@@ -1,13 +1,406 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>日報アプリ</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dairy Report App Mockup</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #fff;
+      --line: #d9deeb;
+      --text: #1f2937;
+      --sub: #6b7280;
+      --brand: #2f6bff;
+      --danger: #dc2626;
+      --ok: #059669;
+      --warn: #d97706;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn.brand { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn.subtle { background: #f3f4f6; }
+    .btn.danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+    .layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 12px 12px 80px;
+    }
+    .hidden { display: none !important; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .title { margin: 0 0 8px; font-size: 18px; }
+    .muted { color: var(--sub); font-size: 12px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      background: #eef2ff;
+      color: #3730a3;
+      margin-right: 6px;
+    }
+    .badge.red { background: #fee2e2; color: #b91c1c; }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.yellow { background: #fef3c7; color: #92400e; }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .field { margin-bottom: 10px; }
+    label { display: block; font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+    input, select, textarea {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 8px;
+      font-size: 14px; background: #fff;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      background: #fff;
+    }
+    .stepbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .dots { display: flex; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #d1d5db; }
+    .dot.on { background: var(--brand); }
+    .bottom-fixed {
+      position: fixed; left: 0; right: 0; bottom: 48px;
+      padding: 8px 12px; background: rgba(246,247,251,0.95);
+      border-top: 1px solid var(--line);
+      display: flex; gap: 8px;
+    }
+    .bottom-tab {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+    .bottom-tab button { border: 0; background: #fff; padding: 10px; font-size: 12px; }
+    .sv-shell { display: grid; grid-template-columns: 240px 1fr; gap: 12px; }
+    .sv-nav { background: #111827; color: #fff; border-radius: 14px; padding: 12px; }
+    .sv-nav button {
+      width: 100%; text-align: left; margin-bottom: 8px; border: 0; border-radius: 10px;
+      padding: 10px; background: #1f2937; color: #fff;
+    }
+    .table {
+      width: 100%; border-collapse: collapse;
+    }
+    .table th, .table td {
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 13px;
+      padding: 8px;
+    }
+    @media (min-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .sv-shell { grid-template-columns: 1fr; }
+      .sv-nav { display: none; }
+    }
+  </style>
 </head>
 <body>
+  <div class="topbar">
+    <button class="btn brand" onclick="switchMode('staff')">スタッフモック</button>
+    <button class="btn" onclick="switchMode('sv')">SVモック</button>
+    <span class="muted" id="routeLabel">route: /</span>
+  </div>
 
-<h1>日報アプリ 起動成功 👍</h1>
-<p>GitHub Pages表示OKです。</p>
+  <main class="layout" id="staffMode">
+    <section class="card" data-route="/">
+      <h2 class="title">ホーム</h2>
+      <button class="btn brand" style="width:100%;padding:14px;">今日の日報を入力</button>
+      <div class="grid-3" style="margin-top:10px;">
+        <div class="card">
+          <div class="muted">成長メーター</div>
+          <div>今週ゲージ: ■■■□□</div>
+          <div>今月S評価数: 4</div>
+          <div>ナレッジ化数: 2</div>
+        </div>
+        <div class="card">
+          <div class="muted">ナレッジ入口</div>
+          <div>最新ナレッジを見る →</div>
+          <div class="muted">「第一声で端末ニーズを先に拾う」</div>
+        </div>
+        <div class="card">
+          <div class="muted">SVコメント</div>
+          <div>昨日の切り返し、冒頭の間が良かったです。</div>
+        </div>
+      </div>
+    </section>
 
+    <section class="card hidden" data-route="/report/today">
+      <h2 class="title">日報ステップ入力</h2>
+      <div class="stepbar">
+        <strong id="stepText">1 / 6</strong>
+        <div class="dots" id="dots"></div>
+      </div>
+      <div id="steps"></div>
+    </section>
+
+    <section class="card hidden" data-route="/reports/me">
+      <h2 class="title">自分の日報履歴</h2>
+      <div class="card">
+        <div>2026-02-15 / イオン催事</div>
+        <span class="badge">draft</span>
+        <button class="btn subtle">編集/閲覧</button>
+      </div>
+      <div class="card" style="margin-top:8px;">
+        <div>2026-02-14 / ○○モール会場</div>
+        <span class="badge green">submitted</span>
+        <button class="btn subtle">編集/閲覧</button>
+      </div>
+      <div class="card" style="margin-top:8px;">
+        <div>2026-02-13 / 店頭</div>
+        <span class="badge yellow">locked</span>
+        <button class="btn subtle">閲覧</button>
+      </div>
+    </section>
+
+    <section class="card hidden" data-route="/knowledge">
+      <h2 class="title">ナレッジ</h2>
+      <div class="field"><input placeholder="タイトル/本文検索" /></div>
+      <div class="chips" style="margin-bottom:8px;">
+        <span class="chip">ヒアリング</span><span class="chip">au MNP</span><span class="chip">週末</span>
+      </div>
+      <div class="card">
+        <strong>料金より先に“家族まとめ”を確認する</strong>
+        <div class="muted">決め手トーク: 今の通信費、家族まとめで月額を圧縮できます。</div>
+        <div class="muted">タグ: 価値訴求 / 家族まとめ / 催事 / 2026-02-15</div>
+      </div>
+    </section>
+  </main>
+
+  <main class="layout hidden" id="svMode">
+    <div class="sv-shell">
+      <aside class="sv-nav">
+        <h3>SVメニュー</h3>
+        <button onclick="routeTo('/sv/dashboard')">ダッシュボード</button>
+        <button onclick="routeTo('/sv/reports')">日報一覧</button>
+        <button onclick="routeTo('/sv/knowledge')">ナレッジ</button>
+        <button onclick="routeTo('/sv/staff-directory')">スタッフ名簿</button>
+      </aside>
+      <div>
+        <section class="card" data-route="/sv">
+          <h2 class="title">SV PIN</h2>
+          <div class="grid-2">
+            <div class="field"><label>4桁PIN</label><input maxlength="4" placeholder="1234" /></div>
+          </div>
+          <button class="btn brand" onclick="routeTo('/sv/dashboard')">認証（モック）</button>
+          <p class="muted">失敗時は「PINが違います」を表示想定。</p>
+        </section>
+
+        <section class="card hidden" data-route="/sv/dashboard">
+          <h2 class="title">SVダッシュボード</h2>
+          <div class="grid-3">
+            <div class="card"><div class="muted">未評価日報</div><h3>12件</h3><button class="btn">未評価を見る</button></div>
+            <div class="card"><div class="muted">解除申請</div><h3>3件</h3><button class="btn">申請を見る</button></div>
+            <div class="card"><div class="muted">今日の提出数/率</div><h3>18件 / 72%</h3></div>
+          </div>
+        </section>
+
+        <section class="card hidden" data-route="/sv/reports">
+          <h2 class="title">SV 日報一覧</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <button class="btn subtle">カード</button>
+            <button class="btn">テーブル</button>
+            <label><input type="checkbox" /> 未評価のみ</label>
+            <label><input type="checkbox" /> 解除申請あり</label>
+            <label><input type="checkbox" /> ロック中</label>
+          </div>
+          <table class="table">
+            <thead><tr><th>日付</th><th>スタッフ</th><th>店舗</th><th>成功タイトル</th><th>評価</th><th>解除申請</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>02/15</td><td>佐藤</td><td>イオン催事</td><td>家族まとめ提案</td><td><span class="badge red">未評価</span></td><td>なし</td><td><button class="btn" onclick="routeTo('/sv/report/1')">詳細</button></td></tr>
+              <tr><td>02/14</td><td>田中</td><td>○○モール</td><td>第一声改善</td><td><span class="badge">A</span></td><td><span class="badge yellow">申請あり</span></td><td><button class="btn" onclick="routeTo('/sv/report/1')">詳細</button></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card hidden" data-route="/sv/report/1">
+          <h2 class="title">SV 日報詳細</h2>
+          <div class="muted">スタッフ: 佐藤 / 稼働日: 2026-02-15 / 会場: イオン催事 / ロック状態: unlocked</div>
+          <details open><summary>情報</summary><p>STEP1の内容</p></details>
+          <details><summary>アプローチ</summary><p>来店: 20 / キャッチ: 8 / 着座: 5</p></details>
+          <details><summary>獲得</summary><p>au MNP HS: 1, UQ 純新規SIM単: 1</p></details>
+          <details><summary>成功</summary><p>料金訴求より先に価値訴求が効いた。</p></details>
+          <details><summary>失敗</summary><p>クロージング時に競合比較で失注。</p></details>
+          <details><summary>所感</summary><p>次回は導線作りを改善。</p></details>
+          <div class="card" style="margin-top:10px;">
+            <h3>SVアクション</h3>
+            <div class="chips"><span class="chip">S</span><span class="chip">A</span><span class="chip">B</span><span class="chip">C</span></div>
+            <div class="field" style="margin-top:8px;"><label>固定タグ</label><div class="chips"><span class="chip">ヒアリング</span><span class="chip">au MNP</span><span class="chip">料金不満</span><span class="chip">催事</span></div></div>
+            <div class="field"><label>コメント</label><textarea placeholder="短文コメント"></textarea></div>
+            <label><input type="checkbox" /> 添削ON（成功/失敗の文面編集）</label>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button class="btn brand">保存</button>
+              <button class="btn">ロック</button>
+              <button class="btn">解除</button>
+              <button class="btn danger">解除申請を承認</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card hidden" data-route="/sv/staff-directory">
+          <h2 class="title">スタッフ名簿管理</h2>
+          <div class="grid-2">
+            <div class="field"><label>名前</label><input placeholder="山田 花子" /></div>
+            <div class="field"><label>イベント会社（任意）</label><input placeholder="ABCイベント" /></div>
+          </div>
+          <button class="btn brand">追加</button>
+          <table class="table" style="margin-top:10px;">
+            <thead><tr><th>名前</th><th>イベント会社</th><th>状態</th></tr></thead>
+            <tbody>
+              <tr><td>佐藤</td><td>ABCイベント</td><td><button class="btn">有効</button></td></tr>
+              <tr><td>田中</td><td>-</td><td><button class="btn subtle">無効</button></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card hidden" data-route="/sv/knowledge">
+          <h2 class="title">SV ナレッジ管理</h2>
+          <div class="grid-2">
+            <input placeholder="検索" />
+            <select><option>タグで絞り込み</option><option>ヒアリング</option><option>au MNP</option></select>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <strong>第一声で用途を先に聞く</strong>
+            <div class="muted">タグ: 第一声 / 仮説提案 / 端末重視</div>
+            <button class="btn subtle">アーカイブ</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-fixed" id="reportFooter" style="display:none;">
+    <button class="btn" onclick="prevStep()">戻る</button>
+    <button class="btn brand" onclick="nextStep()" id="nextBtn">次へ</button>
+  </div>
+
+  <nav class="bottom-tab" id="staffTabs">
+    <button onclick="routeTo('/')">ホーム</button>
+    <button onclick="routeTo('/report/today')">日報</button>
+    <button onclick="routeTo('/knowledge')">ナレッジ</button>
+  </nav>
+
+  <script>
+    const reportSteps = [
+      `<div class="field"><label>稼働日</label><input type="date" value="2026-02-16"></div>
+       <div class="field"><label>スタッフ名</label><select><option>佐藤</option><option>田中</option></select></div>
+       <div class="field"><label>イベント会社</label><input placeholder="会社名"></div>
+       <div class="grid-2"><div class="field"><label>店舗名</label><input placeholder="任意"></div><div class="field"><label>イベント会場</label><input placeholder="任意"></div></div>
+       <div class="field"><label>写真添付（最大3枚）</label><input type="file" multiple></div>`,
+      `<div class="grid-2"><div class="field"><label>来店数</label><input type="number"></div><div class="field"><label>キャッチ数</label><input type="number"></div></div>
+       <div class="grid-2"><div class="field"><label>着座数</label><input type="number"></div><div class="field"><label>見込み</label><input type="number"></div></div>
+       <details><summary>着座内訳</summary><div class="grid-2"><input placeholder="au/UQ既存"><input placeholder="SB/YM"><input placeholder="docomo/ahamo"><input placeholder="楽天"><input placeholder="その他"></div></details>`,
+      `<details open><summary>au</summary><div class="grid-2"><input placeholder="MNP SIM単"><input placeholder="MNP HS"><input placeholder="純新規SIM単"><input placeholder="純新規HS"></div></details>
+       <details><summary>UQ</summary><div class="grid-2"><input placeholder="MNP SIM単"><input placeholder="MNP HS"><input placeholder="純新規SIM単"><input placeholder="純新規HS"></div></details>`,
+      `<details open><summary>LTV獲得</summary><div class="grid-2"><input placeholder="auひかり（新規）"><input placeholder="auひかり（d光）"><input placeholder="BLひかり"><input placeholder="コミュファ光"></div></details>
+       <div class="grid-3"><input placeholder="auでんき"><input placeholder="ゴールドカード"><input placeholder="シルバーカード"></div>`,
+      `<div class="field"><label>タイトル（20字目安）</label><input></div>
+       <div class="field"><label>客層</label><div class="chips"><span class="chip">18歳以下</span><span class="chip">ファミリー</span><span class="chip">シニア</span><span class="chip">外国籍</span><span class="chip">乗り換え検討層</span><span class="chip">不明</span></div></div>
+       <div class="field"><label>来店目的</label><select><option>MNP検討</option><option>新規</option><option>機種変更</option><option>料金見直し</option><option>光/でんき相談</option><option>手続き目的</option><option>立ち寄り</option></select></div>
+       <div class="field"><label>決め手トーク</label><textarea></textarea></div>
+       <div class="field"><label>効いた理由（任意）</label><textarea></textarea></div>`,
+      `<div class="field"><label>NGタイトル</label><input></div>
+       <div class="field"><label>原因タグ</label><div class="chips"><span class="chip">ヒアリング不足</span><span class="chip">ニーズ把握ミス</span><span class="chip">提案順が悪い</span><span class="chip">料金説明が弱い</span><span class="chip">その他</span></div></div>
+       <div class="field"><label>次回どうする（1行）</label><input></div>
+       <div class="field"><label>所感</label><textarea></textarea></div>
+       <div class="field"><label>備考（任意）</label><textarea></textarea></div>`
+    ];
+
+    let mode = 'staff';
+    let route = '/';
+    let step = 1;
+
+    function switchMode(next) {
+      mode = next;
+      document.getElementById('staffMode').classList.toggle('hidden', next !== 'staff');
+      document.getElementById('svMode').classList.toggle('hidden', next !== 'sv');
+      document.getElementById('staffTabs').style.display = next === 'staff' ? 'grid' : 'none';
+      if (next === 'sv' && !route.startsWith('/sv')) route = '/sv';
+      if (next === 'staff' && route.startsWith('/sv')) route = '/';
+      renderRoute();
+    }
+
+    function routeTo(path) {
+      route = path;
+      renderRoute();
+    }
+
+    function renderRoute() {
+      const root = mode === 'staff' ? document.getElementById('staffMode') : document.getElementById('svMode');
+      root.querySelectorAll('[data-route]').forEach((el) => {
+        el.classList.toggle('hidden', el.dataset.route !== route);
+      });
+      document.getElementById('routeLabel').textContent = `route: ${route}`;
+      const isReport = mode === 'staff' && route === '/report/today';
+      document.getElementById('reportFooter').style.display = isReport ? 'flex' : 'none';
+      if (isReport) renderStep();
+    }
+
+    function renderStep() {
+      document.getElementById('stepText').textContent = `${step} / 6`;
+      document.getElementById('steps').innerHTML = reportSteps[step - 1];
+      const dots = document.getElementById('dots');
+      dots.innerHTML = '';
+      for (let i = 1; i <= 6; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i <= step ? ' on' : '');
+        dots.appendChild(d);
+      }
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.textContent = step === 6 ? '提出' : '次へ';
+    }
+
+    function nextStep() {
+      if (step < 6) step += 1;
+      else alert('モック: 提出しました（status=submitted）');
+      renderStep();
+    }
+
+    function prevStep() {
+      if (step > 1) step -= 1;
+      renderStep();
+    }
+
+    renderRoute();
+  </script>
 </body>
 </html>
