@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日報入力モック</title>
+  <style>
+    :root { --bg:#f5f7fb; --card:#fff; --line:#d7deea; --text:#111827; --sub:#6b7280; --brand:#2f6bff; --danger:#dc2626; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:760px;margin:0 auto;padding:14px 14px 100px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+    .top{position:sticky;top:0;z-index:3;background:#fff;border-bottom:1px solid var(--line);padding:10px 14px}
+    h1{font-size:18px;margin:0 0 8px}
+    .muted{font-size:12px;color:var(--sub)}
+    .step-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .dots{display:flex;gap:6px}
+    .dot{width:9px;height:9px;border-radius:50%;background:#cbd5e1}.dot.on{background:var(--brand)}
+    .grid2{display:grid;grid-template-columns:1fr;gap:8px}
+    .field{margin-bottom:10px}
+    label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+    input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff}
+    textarea{min-height:80px}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:12px;background:#fff;cursor:pointer}
+    .chip.on{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}
+    details{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px;background:#fcfdff}
+    summary{cursor:pointer;font-weight:600}
+    .footer{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;gap:8px;padding:10px;z-index:5}
+    button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+    .btn-primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+    .btn-danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+    .status{display:inline-block;padding:4px 10px;border-radius:999px;background:#e0e7ff;color:#3730a3;font-size:12px}
+    .error{color:var(--danger);font-size:12px;margin-top:4px}
+    .success{background:#dcfce7;border:1px solid #86efac;color:#166534;padding:8px;border-radius:10px;font-size:12px;display:none}
+    @media(min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>日報入力 実UIモック /report/today</h1>
+    <div class="muted">5〜10分で入力完了。途中離脱しても下書き復元（localStorage）</div>
+  </div>
+  <div class="wrap">
+    <div class="card step-head">
+      <strong id="stepLabel">STEP 1 / 6</strong>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="status" id="statusLabel">status: draft</span>
+        <span class="muted">report_id: <span id="reportId">未発行</span></span>
+      </div>
+      <div id="saved" class="success">下書きを保存しました。</div>
+      <div id="formRoot"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button onclick="prevStep()">戻る</button>
+    <button onclick="saveDraft()">下書き保存</button>
+    <button class="btn-primary" id="nextBtn" onclick="nextStep()">次へ</button>
+    <button class="btn-danger" onclick="resetAll()">リセット</button>
+  </div>
+
+<script>
+const KEY='daily-report-mock-v1';
+const state=JSON.parse(localStorage.getItem(KEY)||'null')||{
+  reportId:'', status:'draft', step:1,
+  step1:{date:new Date().toISOString().slice(0,10),staff:'',company:'',store:'',venue:'',photos:0},
+  step2:{visitors:'',catch:'',sit:'',prospect:'',breakdown:{auuq:'',sbym:'',docomo:'',rakuten:'',other:''}},
+  step3:{au:{mnpSim:'',mnpHs:'',newSim:'',newHs:''},uq:{mnpSim:'',mnpHs:'',newSim:'',newHs:''}},
+  step4:{auhikariNew:'',auhikariD:'',auhikariSb:'',auhikariOther:'',bl:'',commufa:'',electric:'',gold:'',silver:''},
+  step5:{title:'',segments:[],purpose:'',talk:'',reason:'',other:''},
+  step6:{ngTitle:'',causes:[],next:'',feeling:'',note:''}
+};
+const SEGMENTS=['18歳以下','ファミリー','シニア','外国籍','乗り換え検討層','不明'];
+const PURPOSES=['MNP検討','新規','機種変更','料金見直し','光/でんき相談','手続き目的','立ち寄り'];
+const CAUSES=['ヒアリング不足','ニーズ把握ミス','提案順が悪い','料金説明が弱い','説明過多/長い','価格を先に出した','クロージング弱い','競合比較に負けた','特典/条件の説明ミス','オペ遅れ','会場導線が悪い','声掛けタイミングミス','その他'];
+
+function persist(){ localStorage.setItem(KEY, JSON.stringify(state)); showSaved(); }
+function showSaved(){ const el=document.getElementById('saved'); el.style.display='block'; clearTimeout(showSaved.t); showSaved.t=setTimeout(()=>el.style.display='none',1200);}
+function dotHtml(){return Array.from({length:6},(_,i)=>`<div class="dot ${i<state.step?'on':''}"></div>`).join('')}
+function setVal(path,val){ const [s,k]=path.split('.'); if(k){state[s][k]=val}else state[path]=val; persist(); }
+function toggleArr(path,val){ const arr=state.step5[path]||state.step6[path]; const idx=arr.indexOf(val); idx>=0?arr.splice(idx,1):arr.push(val); persist(); render(); }
+
+function render(){
+  document.getElementById('stepLabel').textContent=`STEP ${state.step} / 6`;
+  document.getElementById('dots').innerHTML=dotHtml();
+  document.getElementById('reportId').textContent=state.reportId||'未発行';
+  document.getElementById('statusLabel').textContent=`status: ${state.status}`;
+  document.getElementById('nextBtn').textContent=state.step===6?'提出':'次へ';
+  const root=document.getElementById('formRoot');
+  root.innerHTML = stepTemplate();
+}
+
+function stepTemplate(){
+  if(state.step===1){
+    return `<div class="field"><label>稼働日 *</label><input type="date" value="${state.step1.date}" onchange="setVal('step1.date',this.value)"></div>
+    <div class="grid2">
+      <div class="field"><label>スタッフ名 *</label><select onchange="setVal('step1.staff',this.value)"><option value="">選択</option><option ${sel(state.step1.staff,'佐藤')}>佐藤</option><option ${sel(state.step1.staff,'田中')}>田中</option></select></div>
+      <div class="field"><label>イベント会社 *</label><input value="${esc(state.step1.company)}" oninput="setVal('step1.company',this.value)"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>店舗名</label><input value="${esc(state.step1.store)}" oninput="setVal('step1.store',this.value)"></div>
+      <div class="field"><label>イベント会場</label><input value="${esc(state.step1.venue)}" oninput="setVal('step1.venue',this.value)"></div>
+    </div>
+    <div class="field"><label>写真添付（最大3枚）</label><input type="file" multiple onchange="state.step1.photos=Math.min(this.files.length,3);persist();render()"><div class="muted">選択中: ${state.step1.photos} 枚</div></div>
+    <div id="step1Err" class="error"></div>`;
+  }
+  if(state.step===2){ return `<div class="grid2">
+      <div class="field"><label>来店数</label><input type="number" value="${state.step2.visitors}" oninput="setVal('step2.visitors',this.value)"></div>
+      <div class="field"><label>キャッチ数</label><input type="number" value="${state.step2.catch}" oninput="setVal('step2.catch',this.value)"></div>
+      <div class="field"><label>着座数</label><input type="number" value="${state.step2.sit}" oninput="setVal('step2.sit',this.value)"></div>
+      <div class="field"><label>見込み</label><input type="number" value="${state.step2.prospect}" oninput="setVal('step2.prospect',this.value)"></div></div>
+      <details><summary>着座内訳</summary><div class="grid2">
+      <input placeholder="au/UQ既存" value="${state.step2.breakdown.auuq}" oninput="state.step2.breakdown.auuq=this.value;persist()">
+      <input placeholder="SB/YM" value="${state.step2.breakdown.sbym}" oninput="state.step2.breakdown.sbym=this.value;persist()">
+      <input placeholder="docomo/ahamo" value="${state.step2.breakdown.docomo}" oninput="state.step2.breakdown.docomo=this.value;persist()">
+      <input placeholder="楽天" value="${state.step2.breakdown.rakuten}" oninput="state.step2.breakdown.rakuten=this.value;persist()">
+      <input placeholder="その他" value="${state.step2.breakdown.other}" oninput="state.step2.breakdown.other=this.value;persist()"></div></details>`; }
+  if(state.step===3){return sectionAcq('au',state.step3.au)+sectionAcq('uq',state.step3.uq)}
+  if(state.step===4){return `<details open><summary>LTV獲得</summary><div class="grid2">
+      <input placeholder="auひかり（新規）" value="${state.step4.auhikariNew}" oninput="setVal('step4.auhikariNew',this.value)">
+      <input placeholder="auひかり（d光）" value="${state.step4.auhikariD}" oninput="setVal('step4.auhikariD',this.value)">
+      <input placeholder="auひかり（SB光）" value="${state.step4.auhikariSb}" oninput="setVal('step4.auhikariSb',this.value)">
+      <input placeholder="auひかり（その他）" value="${state.step4.auhikariOther}" oninput="setVal('step4.auhikariOther',this.value)">
+      <input placeholder="BLひかり" value="${state.step4.bl}" oninput="setVal('step4.bl',this.value)">
+      <input placeholder="コミュファ光" value="${state.step4.commufa}" oninput="setVal('step4.commufa',this.value)"></div></details>
+      <div class="grid2"><input placeholder="auでんき" value="${state.step4.electric}" oninput="setVal('step4.electric',this.value)"><input placeholder="ゴールドカード" value="${state.step4.gold}" oninput="setVal('step4.gold',this.value)"></div>
+      <div class="field"><input placeholder="シルバーカード" value="${state.step4.silver}" oninput="setVal('step4.silver',this.value)"></div>`}
+  if(state.step===5){return `<div class="field"><label>タイトル（20字目安）</label><input value="${esc(state.step5.title)}" oninput="setVal('step5.title',this.value)"></div>
+      <div class="field"><label>客層</label><div class="chips">${SEGMENTS.map(x=>`<span class="chip ${state.step5.segments.includes(x)?'on':''}" onclick="toggleSeg('${x}')">${x}</span>`).join('')}</div></div>
+      <div class="field"><label>来店目的</label><select onchange="setVal('step5.purpose',this.value)"><option value="">選択</option>${PURPOSES.map(x=>`<option ${sel(state.step5.purpose,x)}>${x}</option>`).join('')}</select></div>
+      <div class="field"><label>決め手トーク</label><textarea oninput="setVal('step5.talk',this.value)">${esc(state.step5.talk)}</textarea></div>
+      <div class="field"><label>効いた理由（任意）</label><textarea oninput="setVal('step5.reason',this.value)">${esc(state.step5.reason)}</textarea></div>
+      <div class="field"><label>その他（任意）</label><textarea oninput="setVal('step5.other',this.value)">${esc(state.step5.other)}</textarea></div>`}
+  return `<div class="field"><label>NGタイトル</label><input value="${esc(state.step6.ngTitle)}" oninput="setVal('step6.ngTitle',this.value)"></div>
+      <div class="field"><label>原因タグ</label><div class="chips">${CAUSES.map(x=>`<span class="chip ${state.step6.causes.includes(x)?'on':''}" onclick="toggleCause('${x}')">${x}</span>`).join('')}</div></div>
+      <div class="field"><label>次回どうする（1行）</label><input value="${esc(state.step6.next)}" oninput="setVal('step6.next',this.value)"></div>
+      <div class="field"><label>所感</label><textarea oninput="setVal('step6.feeling',this.value)">${esc(state.step6.feeling)}</textarea></div>
+      <div class="field"><label>備考（任意）</label><textarea oninput="setVal('step6.note',this.value)">${esc(state.step6.note)}</textarea></div>`;
+}
+function sectionAcq(title,obj){return `<details open><summary>${title.toUpperCase()}</summary><div class="grid2">
+  <input placeholder="MNP SIM単" value="${obj.mnpSim}" oninput="state.step3.${title}.mnpSim=this.value;persist()">
+  <input placeholder="MNP HS" value="${obj.mnpHs}" oninput="state.step3.${title}.mnpHs=this.value;persist()">
+  <input placeholder="純新規SIM単" value="${obj.newSim}" oninput="state.step3.${title}.newSim=this.value;persist()">
+  <input placeholder="純新規HS" value="${obj.newHs}" oninput="state.step3.${title}.newHs=this.value;persist()"></div></details>`}
+function validateStep1(){
+  const s=state.step1; let err='';
+  if(!s.date||!s.staff||!s.company) err='STEP1必須項目（稼働日・スタッフ名・イベント会社）を入力してください。';
+  else if(!s.store && !s.venue) err='店舗名またはイベント会場のどちらかを入力してください。';
+  if(err){ const el=document.getElementById('step1Err'); if(el) el.textContent=err; return false; }
+  return true;
+}
+function nextStep(){
+  if(state.step===1 && !validateStep1()) return;
+  if(state.step===1 && !state.reportId) state.reportId = crypto.randomUUID();
+  if(state.step<6){ state.step += 1; persist(); render(); return; }
+  state.status='submitted'; persist(); alert('提出しました（モック）'); render();
+}
+function prevStep(){ if(state.step>1){ state.step -= 1; persist(); render(); } }
+function saveDraft(){ state.status='draft'; persist(); }
+function toggleSeg(v){toggleArr('segments',v)}
+function toggleCause(v){toggleArr('causes',v)}
+function resetAll(){ localStorage.removeItem(KEY); location.reload(); }
+function sel(v,x){return v===x?'selected':''}
+function esc(v){return (v||'').replaceAll('"','&quot;')}
+render();
+</script>
+</body>
+</html>
